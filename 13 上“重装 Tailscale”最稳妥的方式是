@@ -1,0 +1,63 @@
+在 Debian 13 上“重装 Tailscale”最稳妥的方式是：先确保旧环境已清理干净（你已经做了），然后按 Debian 官方仓库方式重新安装。下面把 完整重装流程、可选安装方式、以及安装后检查点 都整理好，方便你一步到位。
+---
+🧩 重装流程（Debian 13 Trixie）
+1. 添加 Tailscale 官方仓库（Debian 13 已支持）
+Debian 13 属于 stable，可以直接用官方源。
+curl -fsSL https://pkgs.tailscale.com/stable/debian/bookworm.noarmor.gpg | sudo tee /usr/share/keyrings/tailscale-archive-keyring.gpg >/dev/null
+
+curl -fsSL https://pkgs.tailscale.com/stable/debian/bookworm.tailscale-keyring.list | \
+  sudo tee /etc/apt/sources.list.d/tailscale.list >/dev/null
+
+官方目前还未发布 trixie 专用源，但 Debian 13 与 bookworm ABI 兼容，官方文档也建议使用 bookworm 源。
+---
+2. 更新软件源并安装
+sudo apt update
+sudo apt install tailscale
+
+---
+3. 启动服务
+sudo systemctl enable --now tailscaled
+
+---
+4. 登录你的 tailnet
+sudo tailscale up
+
+执行后会给你一个 URL，浏览器打开即可完成登录。
+---
+🧪 安装后检查（确保重装成功）
+查看服务状态
+systemctl status tailscaled
+
+应该看到 active (running)。
+查看网络接口
+ip a | grep tailscale
+
+应该出现 tailscale0。
+查看节点信息
+tailscale status
+
+如果能看到自己节点，说明重装成功。
+---
+🧭 可选：安装最新测试版（如果你想要新功能）
+curl -fsSL https://pkgs.tailscale.com/unstable/debian/bookworm.noarmor.gpg | sudo tee /usr/share/keyrings/tailscale-archive-keyring.gpg >/dev/null
+
+curl -fsSL https://pkgs.tailscale.com/unstable/debian/bookworm.tailscale-keyring.list | \
+  sudo tee /etc/apt/sources.list.d/tailscale.list >/dev/null
+
+sudo apt update
+sudo apt install tailscale
+
+---
+🧱 可选：使用静态二进制（不依赖系统包）
+如果你想避免 apt 源，直接下载官方静态构建：
+curl -LO https://pkgs.tailscale.com/stable/tailscale_amd64.tgz
+tar xzf tailscale_amd64.tgz
+sudo mv tailscale/tailscale /usr/local/bin/
+sudo mv tailscale/tailscaled /usr/local/sbin/
+
+然后手动启动：
+sudo tailscaled &
+sudo tailscale up
+
+---
+如果你告诉我你想要 稳定版、最新功能版、还是静态二进制版，我可以给你一个完全自动化的“重装脚本”，一键完成添加源 → 安装 → 启动 → 登录。
